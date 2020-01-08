@@ -1,0 +1,58 @@
+========= QUICK BOOK ===========
+( ) * ^ $ + \ . | ? { [ => Special characters
+[] => Character class ; supports ranges like a-z, A-Z, 0-9 or their subsets
+[a-z-[aeiou]] => e.g. for character class substraction
+[^1234] => e.g. of character class negation
+{} => Repition
+() => grouping
+ | => piping (either LHS or RHS); mostly used inside grouping braces
+ + => {1,} : 1 or more repition
+ * => {0,} : 0 or more repition
+ ? => {0,1} : 0 or 1 i.e. optional
+   => placing it after + or ? or * or {} makes them lazy
+   => placing ?: as first two character inside () makes the group non-capturing (just for optimisation)
+   => (?<name> ) this format is used for naming the capture group (can be reffered as \k<name>)
+ . => any single character except line breaks
+ ^ => start of string/line : anchor - zero length
+   => negation (when applied as first character inside [])
+ $ => end of string/line : anchor - zero length
+\A => start of file/string (not line) : anchor - zero length
+\Z => end of file/string (not line) : anchor - zero length
+\b => word boundary i.e. start/end : anchor - zero length
+\B => [^\b]
+\t => tab
+\r => carriage return
+\n => new line
+\d => any digit i.e. [0-9] 
+\D => [^\d] 
+\s => any white space i.e. [\n\r\t\f] 
+\S => [^\s] 
+\w => any word Character i.e. [0-9a-zA-Z_]
+\W => [^\w]
+
+=========== NOTES ==============
+- Reserved/special characters: ( ) * ^ $ + \ . | ? { [   => This slightly varies based on software/language/flavour in use. To use any of them as literal, we must escape them using \ as prefix. However, escaping non-reserved charcters with \ may lead to different meanings altogether - for e.g. \d is a shorthand to match a single digit from 0 to 9; \t => tab ; \n => new-line ; \r => carriage-return; \R => line-break (\n or \r\n based on OS)
+- Character class : [asd] : maches a single Character inside the [] .. only single Character... must also be a Character.. the order of the Character inside does not matter, as it matches a single Character only... for e.g. j[oa]n would match jon and jan but not joan or jn ... we also can use range.. for e.g. a[0-9a-zX]t would match a1t or aft or att or aXt but not a3at or aBt .. if first Character in Character clas is ^ that means it refers to negated Character class.. for e.g. [^0-9\r\n] would match anything other than a digit or a line feed ... q[^u] would find any match in "Iraq is a country" but not in "Iraq" .. Inside a Character class, only four Characters are considered special [ - ^ \  ... rest all Characters (including + or . or * ) are considered normal Character... so [+*] would match a + or a * in the string .. some flavours do not allow escaping these special Characters even using \ ... even ^ is considered special only if its used just after [ , else it would be considered just a literal. for e.g. [x^] would match x or ^ ... similarly placement of - inside Character class would be considered literal if its not reprsenting a range ... e.g. [-C] would match - or C ...
+- Character Class Subtraction : [a-z-[aeiou]] : supported by few flavours : If the character after a hyphen is an opening bracket, these flavors interpret the hyphen as the subtraction operator rather than the range operator. e.g. [a-z-[aeiuo]] matches a single letter that is not a vowel. This is equivalent to [b-df-hj-np-tv-z] ... note that Negation Takes Precedence over Subtraction ... for e.g. [^1234-[3456]] means “(not 1234) minus 3456” .. Thus it matches any character other than the digits 1, 2, 3, 4, 5, and 6 ...
+- Character Class Intersection: [a-z&&[^aeiou]] : supported by few flavours : [a-z&&[^aeiou]] means same as [a-z-[aeiou]] ... [0-9&&[0-6&&[4-9]]] is the same as [4-6] or [0-9&&[0-6]&&[4-9]] or [0-9&&0-6&&4-9]
+- Shorthand Character Classes : \d => any digit i.e. [0-9] ; \D => [^\d] ; \s => any white space i.e. [\n\r\t\f] ; \S => [^\s] ; \w => any word Character i.e. [0-9a-zA-Z_] ; \W => [^\w]
+- Pipe : \b(cat|dog)\b : matches either left or the right; \b(cat|dog)\b is different from \bcat|dog\b ... first one would match start-of-word+(cat or dog)+end-of-word , whereas second one would match (wodr-start+cat) or (dog+word-end) ... note that the order matters, as regex first tries matching the leftside before attempting the rightside.... so (cat|cats) would only match cat in "these are my cats"
+- {} : {1,3} => specifies the min and maximum repitition; {3,} => 3 or more repitition; {2} => 2 repitition ; {0,1} => 0 or 1 repition
+- + : 1 or more : {1,} => attempts to match the preceding token (character/set/class) multiple times 1 or more
+- ? : 0 or 1 : {0,1} => makes the preceding token (character/set/class) in the regular expression optional i.e. 0 or 1 occurence. colou?r matches both colour and color; Nov(ember)? matches Nov and November ... ? is one of the greedy expression
+- * : 0 or more : {0,} => attempts to match the preceding token (character/set/class) 0 or more times
+- . => matches any single Character except line-break ; a negated class is mostly better than the .
+- ^ => an anchor (zero length) that matches start of a string/line; it also means negate, if used as first Character inside a Character class [] ; \A => start of file/string (not line)
+- $ => an anchor (zero length) that matches end of a string/line; \Z => end of file/string (not line)
+- \b => an anchor (zero length) that matches word boundary (start-of-line, end-of-line or between-a-word-and-not-word-character) ; allows you to perform a “whole words only” search using a regular expression in the form of \bword\b ; \B => negate of \b
+- () : grouping =>  group part of the regular expression together. Apart from grouping it also create a numbered capturing group. The regex Set(Value)? matches Set or SetValue. In the first case, the first (and only) capturing group remains empty. In the second case, the first capturing group matches Value. If you do not need the group to capture its match, you can optimize this regular expression into Set(?:Value)?. The question mark and the colon after the opening parenthesis are the syntax that creates a non-capturing group. Captured group can be reused bby its numbered-position ... e.g.  <([A-Z][A-Z0-9]*)\b[^>]*>.*?</\1> matches the HTML syntax.
+- placing a ? after + or ? or * or {} makes them lazy; by default all four are greedy; so a following ? forces them to match as few as possible
+- numbered grouping: ([abc]c)\1 : here the first capture group is automatically number as 1 and then reused.. it would match acac or bcbc or cccc
+- named grouping: (?<foo>[abc])\k<foo> : here we named the first capture group as foo and referenced it later using \k<foo>
+- Look-ahead and Look-behind: d(?=r) => matches a d only if is followed by r (r not part regex match); (?<=r)d => matches a d only if is preceded by r (r not part regex match) ; d(?!r) => matches a d only if not followed by r ; (?<!r)d => matches a d only if not preceded by r
+
+========================
+Find HTML tags: 
+	- <.+> => wrong as it would greedy and match "<a>asd </a>" instead of just "<a>" => <[^>]+> would do the needful
+Find HTML syntax <anytag some-attributes> some text </anytag>
+	-  <([A-Z][A-Z0-9]*)\b[^>]*>.*?</\1>
